@@ -3,16 +3,15 @@
 namespace App;
 
 use App\Contracts\AuthInterface;
+use App\Contracts\SessionInterface;
 use App\Contracts\UserInterface;
 use App\Contracts\UserProviderServiceInterface;
-use App\Entity\User;
-use App\Exception\ValidationException;
-use Doctrine\ORM\EntityManager;
+use App\DataObjects\RegisterUserData;
 
 class Auth implements AuthInterface
 {
     private ?UserInterface $user = null;
-    public function __construct(private readonly UserProviderServiceInterface $userProvider)
+    public function __construct(private readonly UserProviderServiceInterface $userProvider, private readonly SessionInterface $session)
     {
     }
 
@@ -22,7 +21,7 @@ class Auth implements AuthInterface
             return $this->user;
         }
 
-        $userId = $_SESSION['user'] ?? null;
+        $userId = $this->session->get('user');
 
         if (!$userId) {
             return null;
@@ -47,11 +46,7 @@ class Auth implements AuthInterface
             return false;
         }
 
-        session_regenerate_id();
-
-        $_SESSION['user'] = $user->getId();
-
-        $this->user = $user;
+        $this->logIn($user);
 
         return true;
     }
@@ -63,9 +58,26 @@ class Auth implements AuthInterface
 
     public function logOut(): void
     {
-        unset($_SESSION['user']);
+        $this->session->forget('user');
+        $this->session->regenerate();
 
         $this->user = null;
-        // TODO: Implement logOut() method.
+    }
+
+    public function register(RegisterUserData $data): UserInterface
+    {
+        $user = $this->userProvider->createUser($data);
+
+        $this->logIn($user);
+
+        return $user;
+    }
+
+    public function logIn(UserInterface $user): void
+    {
+        $this->session->regenerate();
+        $this->session->put('user', $user->getId());
+
+        $this->user = $user;
     }
 }
