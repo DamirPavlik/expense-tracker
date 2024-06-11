@@ -9,6 +9,7 @@
   "devDependencies": {
     "@popperjs/core": "^2.11.6",
     "@symfony/webpack-encore": "^4.0.0",
+    "bootstrap-icons": "^1.10.2",
     "bootstrap": "^5.2.1",
     "core-js": "^3.26.1",
     "datatables.net": "^1.13.1",
