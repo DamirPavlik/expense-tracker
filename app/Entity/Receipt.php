@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping\Column;
@@ -12,17 +14,19 @@ use Doctrine\ORM\Mapping\Table;
 #[Entity, Table('receipts')]
 class Receipt
 {
-
     #[Id, Column(options: ['unsigned' => true]), GeneratedValue]
     private int $id;
 
     #[Column]
-    private string $file_name;
+    private string $filename;
 
-    #[Column(name: "created_at")]
+    #[Column(name: 'storage_filename')]
+    private string $storageFilename;
+
+    #[Column(name: 'created_at')]
     private \DateTime $createdAt;
 
-    #[ManyToOne(inversedBy: "receipts")]
+    #[ManyToOne(inversedBy: 'receipts')]
     private Transaction $transaction;
 
     public function getId(): int
@@ -30,14 +34,15 @@ class Receipt
         return $this->id;
     }
 
-    public function getFileName(): string
+    public function getFilename(): string
     {
-        return $this->file_name;
+        return $this->filename;
     }
 
-    public function setFileName(string $file_name): Receipt
+    public function setFilename(string $filename): Receipt
     {
-        $this->file_name = $file_name;
+        $this->filename = $filename;
+
         return $this;
     }
 
@@ -49,6 +54,7 @@ class Receipt
     public function setCreatedAt(\DateTime $createdAt): Receipt
     {
         $this->createdAt = $createdAt;
+
         return $this;
     }
 
@@ -57,11 +63,24 @@ class Receipt
         return $this->transaction;
     }
 
-    public function addTransaction(Transaction $transaction): Receipt
+    public function setTransaction(Transaction $transaction): Receipt
     {
-        $transaction->addReceipts($this);
+        $transaction->addReceipt($this);
+
         $this->transaction = $transaction;
+
         return $this;
     }
 
+    public function getStorageFilename(): string
+    {
+        return $this->storageFilename;
+    }
+
+    public function setStorageFilename(string $storageFilename): Receipt
+    {
+        $this->storageFilename = $storageFilename;
+
+        return $this;
+    }
 }
