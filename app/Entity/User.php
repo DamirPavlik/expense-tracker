@@ -1,20 +1,20 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\Entity;
 
+use App\Contracts\OwnableInterface;
 use App\Contracts\UserInterface;
 use App\Entity\Traits\HasTimestamps;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\ORM\Event\LifecycleEventArgs;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\Mapping\GeneratedValue;
 use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
 use Doctrine\ORM\Mapping\Id;
 use Doctrine\ORM\Mapping\OneToMany;
-use Doctrine\ORM\Mapping\PrePersist;
-use Doctrine\ORM\Mapping\PreUpdate;
 use Doctrine\ORM\Mapping\Table;
 
 #[Entity, Table('users')]
@@ -35,16 +35,23 @@ class User implements UserInterface
     #[Column]
     private string $password;
 
-    #[OneToMany(mappedBy: "user", targetEntity: Category::class)]
+    #[Column(name: 'two_factor', options: ['default' => false])]
+    private bool $twoFactor;
+
+    #[Column(name: 'verified_at', nullable: true)]
+    private ?\DateTime $verifiedAt;
+
+    #[OneToMany(mappedBy: 'user', targetEntity: Category::class)]
     private Collection $categories;
 
-    #[OneToMany(mappedBy: "user", targetEntity: Transaction::class)]
-    private Collection $transaction;
+    #[OneToMany(mappedBy: 'user', targetEntity: Transaction::class)]
+    private Collection $transactions;
 
     public function __construct()
     {
-        $this->categories  = new ArrayCollection();
-        $this->transaction = new ArrayCollection();
+        $this->categories   = new ArrayCollection();
+        $this->transactions = new ArrayCollection();
+        $this->twoFactor    = false;
     }
 
     public function getId(): int
@@ -60,6 +67,7 @@ class User implements UserInterface
     public function setName(string $name): User
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -71,6 +79,7 @@ class User implements UserInterface
     public function setEmail(string $email): User
     {
         $this->email = $email;
+
         return $this;
     }
 
@@ -82,32 +91,11 @@ class User implements UserInterface
     public function setPassword(string $password): User
     {
         $this->password = $password;
+
         return $this;
     }
 
-    public function getCreatedAt(): \DateTime
-    {
-        return $this->createdAt;
-    }
-
-    public function setCreatedAt(\DateTime $createdAt): User
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    public function getUpdatedAt(): \DateTime
-    {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTime $updatedAt): User
-    {
-        $this->updatedAt = $updatedAt;
-        return $this;
-    }
-
-    public function getCategories(): Collection
+    public function getCategories(): ArrayCollection|Collection
     {
         return $this->categories;
     }
@@ -115,18 +103,48 @@ class User implements UserInterface
     public function addCategory(Category $category): User
     {
         $this->categories->add($category);
+
         return $this;
     }
 
-    public function getTransaction(): Collection
+    public function getTransactions(): ArrayCollection|Collection
     {
-        return $this->transaction;
+        return $this->transactions;
     }
 
     public function addTransaction(Transaction $transaction): User
     {
-        $this->transaction->add($transaction);
+        $this->transactions->add($transaction);
+
         return $this;
     }
 
+    public function canManage(OwnableInterface $entity): bool
+    {
+        return $this->getId() === $entity->getUser()->getId();
+    }
+
+    public function getVerifiedAt(): ?\DateTime
+    {
+        return $this->verifiedAt;
+    }
+
+    public function setVerifiedAt(\DateTime $verifiedAt): static
+    {
+        $this->verifiedAt = $verifiedAt;
+
+        return $this;
+    }
+
+    public function hasTwoFactorAuthEnabled(): bool
+    {
+        return $this->twoFactor;
+    }
+
+    public function setTwoFactor(bool $twoFactor): User
+    {
+        $this->twoFactor = $twoFactor;
+
+        return $this;
+    }
 }
