@@ -43,7 +43,7 @@ class EntityManagerService implements EntityManagerServiceInterface
         }
     }
 
-    public function clear(?string $entityName = null)
+    public function clear(?string $entityName = null): void
     {
         if ($entityName === null) {
             $this->entityManager->clear();
@@ -57,5 +57,13 @@ class EntityManagerService implements EntityManagerServiceInterface
         foreach ($entities as $entity) {
             $this->entityManager->detach($entity);
         }
+    }
+
+    public function enableUserAuthFilter(int $userId): void
+    {
+        $this->getFilters()->enable('user')->setParameter(
+            'user_id',
+            $userId
+        );
     }
 }
